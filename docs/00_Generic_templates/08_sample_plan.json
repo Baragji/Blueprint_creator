@@ -1,0 +1,69 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "autonomous-coding-framework-demo",
+    "type": "monorepo",
+    "goals": [
+      "Demonstrate MC→Executor→Validator flow",
+      "Enforce lint/test as guardrails",
+      "Produce evidence artifacts"
+    ],
+    "constraints": ["offline_safe", "no paid APIs"]
+  },
+  "workspaces": [
+    {
+      "name": "core",
+      "path": "packages/core",
+      "language": "py",
+      "framework": "none",
+      "commands": {
+        "install": "python -m pip install -r requirements.txt || true",
+        "build": "python -m py_compile $(git ls-files '*.py') || true",
+        "test": "python -m pytest -q || true",
+        "lint": "python -m ruff . --quiet || true"
+      }
+    }
+  ],
+  "phases": [
+    {
+      "id": "phase-0-bootstrap",
+      "objectives": ["Initialize execution folders and state files"],
+      "tasks": [
+        {
+          "id": "scaffold-docs-execution",
+          "objective": "Create docs/execution structure and seed state files",
+          "dependencies": [],
+          "acceptance": ["All canonical directories exist", "State files created"],
+          "artifacts": ["docs/execution/state/CURRENT_STATE.md"],
+          "workspace": "core",
+          "estimated_effort": "XS"
+        }
+      ]
+    },
+    {
+      "id": "phase-1-quality",
+      "objectives": ["Establish linting and tests"],
+      "tasks": [
+        {
+          "id": "lint-setup",
+          "objective": "Ensure linter runs clean with zero warnings",
+          "dependencies": [],
+          "acceptance": ["Lint exits 0 with 0 warnings"],
+          "artifacts": ["evidence/lint.log"],
+          "workspace": "core",
+          "estimated_effort": "S"
+        },
+        {
+          "id": "test-setup",
+          "objective": "Add at least one failing then passing test",
+          "dependencies": [],
+          "acceptance": ["Failing test reproduced", "Test passes after fix"],
+          "artifacts": ["evidence/tests_red.log", "evidence/tests_green.log"],
+          "workspace": "core",
+          "estimated_effort": "S"
+        }
+      ]
+    }
+  ],
+  "priorities": {"scaffold-docs-execution": 1, "lint-setup": 2, "test-setup": 3}
+}

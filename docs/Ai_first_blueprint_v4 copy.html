@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive AI-First Enterprise Blueprint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The SPA is designed as a top-down narrative journey. It starts with the high-level 'Why' and 'Who' (the model and team), then dives into the 'How' (the interactive lifecycle timeline), reinforces the core 'Rules' (guardrails), details the 'What' (artifacts and cadence), and finally shows the 'Result' (metrics and checklist). This structure was chosen because the source material is a process-oriented blueprint, making a linear, guided flow the most intuitive way for a user to understand and absorb the complex information, with interactive drill-downs for detail on demand. -->
+    <!-- Visualization & Content Choices: 
+        - Operating Model -> Goal: Inform -> Viz: Donut Chart -> Interaction: Hover -> Justification: Quickly shows the AI/human work balance -> Library: Chart.js (Canvas).
+        - AI Roles -> Goal: Organize -> Viz: Icon Grid -> Interaction: None -> Justification: Easily scannable breakdown of the team -> Library: HTML/CSS.
+        - Lifecycle Phases -> Goal: Organize/Change -> Viz: Interactive Vertical Timeline -> Interaction: Click to expand details -> Justification: Best represents a sequential process and hides complexity until requested -> Library: HTML/CSS/JS.
+        - DORA Metrics -> Goal: Compare -> Viz: Radar Chart -> Interaction: Hover -> Justification: Ideal for comparing multiple performance KPIs against a baseline -> Library: Chart.js (Canvas).
+        - Artifacts -> Goal: Inform -> Viz: Tag Cloud/Grid -> Interaction: None -> Justification: Shows the breadth of documentation tangibly -> Library: HTML/CSS.
+        - Weekly Cadence -> Goal: Inform -> Viz: Structured List -> Interaction: None -> Justification: Clearly presents the weekly schedule -> Library: HTML/CSS.
+        - Checklist -> Goal: Inform/Organize -> Viz: Interactive Checklist -> Interaction: Click to check -> Justification: Provides an actionable tool for the user -> Library: HTML/CSS/JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+                max-height: 400px;
+            }
+        }
+
+        .timeline-item-content {
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .timeline-item-content.open {
+            max-height: 500px;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .checklist-item label {
+            transition: color 0.2s ease-in-out;
+        }
+
+        .checklist-item input:checked+label {
+            text-decoration: line-through;
+            color: #6b7280;
+        }
+        
+        #gemini-modal.hidden {
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #1d4ed8;
+            animation: spin 1s ease infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .pipeline-log-entry {
+            padding: 8px;
+            border-left: 3px solid transparent;
+        }
+        .pipeline-log-entry.running {
+            border-left-color: #fbbf24; /* amber-400 */
+            background-color: #fefce8; /* yellow-50 */
+        }
+        .pipeline-log-entry.success {
+            border-left-color: #34d399; /* emerald-400 */
+        }
+        .pipeline-log-entry.error {
+            border-left-color: #f87171; /* red-400 */
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-black text-[#1d4ed8]">AI-First Enterprise Blueprint</h1>
+            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">An interactive guide to shipping enterprise-grade
+                software with an AI workforce, led by a single non-coding founder.</p>
+        </header>
+
+        <nav class="sticky top-0 bg-white/80 backdrop-blur-sm z-10 rounded-lg shadow-sm mb-16">
+            <div class="mx-auto px-4">
+                <div class="flex justify-center items-center h-16 space-x-4 md:space-x-8 overflow-x-auto">
+                    <a href="#model"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Model</a>
+                    <a href="#pre-phase"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Pre-Phase Planning</a>
+                    <a href="#lifecycle"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Lifecycle</a>
+                    <a href="#guardrails"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Guardrails</a>
+                    <a href="#principles"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Principles</a>
+                    <a href="#outputs"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Outputs</a>
+                    <a href="#metrics"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Metrics</a>
+                    <a href="#checklist"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Checklist</a>
+                    <a href="#notes"
+                        class="text-gray-700 hover:text-[#1d4ed8] font-semibold text-sm md:text-base whitespace-nowrap">Notes</a>
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            <section id="model" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">The Operating Model</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">The "AI-First, Human-Led" model leverages
+                        specialized AI agents for execution, with the founder providing strategic direction and final
+                        approval. This section explains this core relationship.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-xl mb-4 text-center">Division of Labor</h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="workloadChart"
+                                aria-label="Donut chart showing AI Execution at 95% and Human Oversight at 5%"></canvas>
+                        </div>
+                        <p class="text-center text-sm text-gray-500 mt-4">AI handles the vast majority of development
+                            tasks, freeing up the human founder to focus on high-impact decisions and risk management.
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-xl mb-4 text-center">Your AI Dev Team</h3>
+                        <p class="text-center text-sm text-gray-500 mb-6">A crew of specialized AI agents works in
+                            concert to cover the entire software lifecycle.</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">🗓️</span><span class="font-semibold">Planner</span></div>
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">✍️</span><span class="font-semibold">Implementer</span></div>
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">🛡️</span><span class="font-semibold">Security Reviewer</span>
+                            </div>
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">🧪</span><span class="font-semibold">Test Engineer</span>
+                            </div>
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">📡</span><span class="font-semibold">SRE/Observability</span>
+                            </div>
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">🧠</span><span class="font-semibold">AI Governance</span>
+                            </div>
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">💰</span><span class="font-semibold">FinOps</span></div>
+                            <div class="flex items-center p-3 bg-slate-100 rounded-lg"><span
+                                    class="text-2xl mr-3">📄</span><span class="font-semibold">Docs/Comms</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="pre-phase" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Pre-Phase Roadmap Creator</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">Before development begins (G0), an automated planning system turns your idea into a complete, big-tech standard "Plan Pack." This phase uses a dedicated team of AI planning agents to create a comprehensive dossier covering architecture, risks, NFRs, and more.</p>
+                     <button id="gemini-idea-button" class="mt-6 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center justify-center mx-auto">
+                        ✨ Create a Plan Pack from an Idea
+                    </button>
+                </div>
+                <div class="relative max-w-3xl mx-auto">
+                    <div class="border-l-4 border-purple-300 absolute h-full top-0 left-5"></div>
+                    <div id="pre-phase-timeline-container" class="space-y-4">
+                    </div>
+                </div>
+            </section>
+
+            <section id="lifecycle" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">The Development Lifecycle (G-Gates)</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">Once the Plan Pack is approved, the development lifecycle begins. This journey from G0 to G8 turns the plan into a scaled, operational product.</p>
+                </div>
+                <div class="relative max-w-3xl mx-auto">
+                    <div class="border-l-4 border-blue-300 absolute h-full top-0 left-5"></div>
+                    <div id="timeline-container" class="space-y-4">
+                    </div>
+                </div>
+            </section>
+
+            <section id="guardrails" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Core Guardrails & Controls</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">To ensure safety and reliability when
+                        working with an AI team, specific principles and controls are enforced. These are non-negotiable
+                        rules for the system.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">A. Zero-Trust Code Acceptance</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>Each change: tests, linters, SAST/DAST, ASVS/SSDF checks, license & secret scans.</li>
+                            <li>SBOM (SPDX/CycloneDX) create + diff & SLSA level provenance attestation.</li>
+                            <li>Sigstore/Cosign signature verified pre-merge; vulnerability SLAs enforced.</li>
+                            <li>OpenTelemetry (OTLP) trace present; docs & changelog updated.</li>
+                            <li>Dual-AI review (Security + Test) before your approval; tests are gates.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">B. Provenance & Auditability</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>Log prompts, model IDs, temperature, tool access, diffs.</li>
+                            <li>Signed attestations link artifact ↔ SBOM ↔ SLSA provenance.</li>
+                            <li>Immutable audit trail retained per release.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">C. Human Oversight & JIT Access</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>Your approval at G0, G1, G2, G6 & any data/privacy/SLA/SLO change.</li>
+                            <li>AI access to <strong>secrets & production</strong> is read-only by default; short-lived JIT tokens with workflows.</li>
+                            <li>Decision narratives replace raw code review overhead.</li>
+                            <li>"Composer-first" approach with docker-compose.guardrails.yml.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">D. AI Governance & Compliance</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>Model & prompt cards; eval harness; red teaming.</li>
+                            <li>OWASP LLM Top 10 tests; DPIA remains current.</li>
+                            <li>Align to NIST AI RMF & ISO/IEC 42001.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">E. FinOps Cost Controls</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>Inform → Optimize → Operate loop weekly.</li>
+                            <li>GPU/LLM tagging + FOCUS normalization (feature-level cost attribution).</li>
+                            <li>Weekly cost & efficiency report surfaced to you.</li>
+                            <li>Budget guardrails fail build / block merge if forecast breached.</li>
+                            <li>Savings plans & rightsizing tracked.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">F. SRE & Observability</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>Golden signals (latency, errors, saturation) dashboards via OTLP.</li>
+                            <li>SLOs & error budgets gate risky changes.</li>
+                            <li>On-call rota (AI alerts to you); incident runbooks & blameless postmortems.</li>
+                            <li>War-room protocol; action SLAs for postmortems.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">G. Data & Privacy</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>DPIA plan; retention & deletion policies.</li>
+                            <li>Data classification & minimization controls.</li>
+                            <li>Virtual DPO contact; AI Act scope tracking.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">H. Release Safety</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>Feature flags; progressive delivery (canary → % rollouts → full).</li>
+                            <li>Auto-rollback thresholds tied to SLOs; change windows defined.</li>
+                            <li>Signed release & rollback playbooks; preview env per PR.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">I. Minimal Tooling</h3>
+                        <ul class="list-disc ml-4 text-sm text-gray-600 space-y-1">
+                            <li>docker-compose.guardrails.yml (pinned digests).</li>
+                            <li>Pre-commit & CI: secret/license/dep scans, SAST, IaC/container scans.</li>
+                            <li>Coverage gates, SBOM emit, Cosign sign/verify, Scorecard, OTel smoke test.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="principles" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Core Principles & Philosophy</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">Key operational principles that distinguish this AI-first approach from traditional development workflows.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
+                        <h3 class="font-bold text-lg mb-2 text-blue-700">Composer-First Approach</h3>
+                        <p class="text-sm text-gray-600">Single <code class="text-xs bg-gray-100 px-1 rounded">docker-compose.guardrails.yml</code> with pinned image digests for one-command local setup of all quality gates and dashboards.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
+                        <h3 class="font-bold text-lg mb-2 text-green-700">Tests Are Gates</h3>
+                        <p class="text-sm text-gray-600">Every test failure blocks progression. Tests act as quality gates across unit, integration, contract, E2E, performance, and chaos scenarios.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+                        <h3 class="font-bold text-lg mb-2 text-purple-700">Decision Narratives</h3>
+                        <p class="text-sm text-gray-600">Replace detailed code reviews with high-level decision narratives and dashboard summaries—focus on strategy, not syntax.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-orange-500">
+                        <h3 class="font-bold text-lg mb-2 text-orange-700">Pair/Mob AI Agents</h3>
+                        <p class="text-sm text-gray-600">For complex areas, AI agents work together in pair/mob programming sessions to cross-pollinate knowledge and reduce single-agent bias.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500">
+                        <h3 class="font-bold text-lg mb-2 text-red-700">Well-Architected Mapping</h3>
+                        <p class="text-sm text-gray-600">Architecture decisions explicitly map to Well-Architected Framework pillars (Operational Excellence, Security, Reliability, Performance, Cost, Sustainability).</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-teal-500">
+                        <h3 class="font-bold text-lg mb-2 text-teal-700">Experimentation with Cohorts</h3>
+                        <p class="text-sm text-gray-600">Feature experimentation includes user cohorts, guardrails, and controlled rollouts to validate hypotheses before full deployment.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="outputs" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Key Outputs & Cadence</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">This process generates a set of living
+                        documents (Artifacts) and follows a simple weekly schedule to ensure consistent progress and
+                        oversight.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-xl mb-4 text-center">Living Artifacts</h3>
+                        <p class="text-center text-sm text-gray-500 mb-6">These are the concrete deliverables produced
+                            and maintained throughout the lifecycle.</p>
+                        <div class="flex flex-wrap gap-2 justify-center text-xs">
+                            <span class="p-2 bg-slate-100 rounded-md">One-pager, OKRs</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Risk Register</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Data Map, DPIA</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Architecture Diagrams</span>
+                            <span class="p-2 bg-slate-100 rounded-md">RFCs, ADRs</span>
+                            <span class="p-2 bg-slate-100 rounded-md">API Specs</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Schema/Migrations</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Test Plan & Coverage Dashboard</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Perf/Chaos Results</span>
+                            <span class="p-2 bg-slate-100 rounded-md">SLO/Error-Budget Policy</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Incident/Postmortem Templates</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Runbooks</span>
+                            <span class="p-2 bg-slate-100 rounded-md">CI/CD Config</span>
+                            <span class="p-2 bg-slate-100 rounded-md">SBOMs (SPDX/CycloneDX)</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Provenance Attestations</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Release & Rollback Playbooks</span>
+                            <span class="p-2 bg-slate-100 rounded-md">UX Flows & Content</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Design System Tokens</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Accessibility Checklist & Audit</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Cost Model & FinOps FOCUS Reports</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Launch/Rollout Comms</span>
+                            <span class="p-2 bg-slate-100 rounded-md">Training/Support Docs</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-xl mb-4 text-center">Weekly Cadence</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <div class="flex-shrink-0 w-12 text-center"><span
+                                        class="text-lg font-bold text-[#1d4ed8]">MON</span></div>
+                                <p class="ml-4 text-sm text-gray-700">Review OKRs, DORA dashboard, and cost report.
+                                    Approve the next milestone.</p>
+                            </li>
+                            <li class="flex items-start">
+                                <div class="flex-shrink-0 w-12 text-center"><span
+                                        class="text-lg font-bold text-[#1d4ed8]">WED</span></div>
+                                <p class="ml-4 text-sm text-gray-700">Review G5 demos from AI agents. Accept or reject
+                                    completed increments.</p>
+                            </li>
+                             <li class="flex flex-col items-center">
+                                <div class="flex items-start w-full">
+                                    <div class="flex-shrink-0 w-12 text-center"><span
+                                            class="text-lg font-bold text-[#1d4ed8]">FRI</span></div>
+                                    <p class="ml-4 text-sm text-gray-700">Conduct postmortems, refresh the risk register and
+                                        roadmap. Publish changelog.</p>
+                                </div>
+                                <button id="gemini-update-button" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center justify-center">
+                                    ✨ Draft Weekly Update
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="metrics" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Measuring Success</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">Your weekly review is powered by a dashboard
+                        tracking engineering velocity (DORA) and financial efficiency (FinOps). This gives you a
+                        complete, at-a-glance view of operational health.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="font-bold text-xl mb-4 text-center">Weekly Performance Dashboard</h3>
+                    <div class="chart-container">
+                        <canvas id="doraChart"
+                            aria-label="Radar chart showing weekly performance for DORA metrics and cost efficiency."></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="checklist" class="mb-20 scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Acceptance Checklist</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">Use this checklist to ensure every quality
+                        gate is formally passed before proceeding. This is your final sign-off for each major stage.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md max-w-3xl mx-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm text-gray-500">Progress saved locally</span>
+                        <button id="reset-checklist" class="text-xs text-red-600 hover:underline">Reset</button>
+                    </div>
+                    <div id="acceptance-checklist-container" class="space-y-3"></div>
+                </div>
+            </section>
+
+            <section id="notes" class="scroll-mt-24">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900">Implementation Notes</h2>
+                    <p class="mt-3 text-md text-gray-600 max-w-2xl mx-auto">Important context on tooling, scope, and
+                        scaling the blueprint for your specific needs.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">Tooling Philosophy</h3>
+                        <p class="text-sm text-gray-600">The specific tools are swappable. This blueprint cares about 
+                            the <strong>controls</strong>, not the brands. Focus on implementing security and quality gates 
+                            via pre-commit hooks and a single <code class="text-xs bg-gray-100 px-1 rounded">docker-compose.guardrails.yml</code>, 
+                            regardless of vendor choice. One-command local spin-up for preview envs and golden-signal dashboards.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">Scope & Scaling</h3>
+                        <p class="text-sm text-gray-600">If your product <strong>does not</strong> include AI features, keep the 
+                            AI Governance agent focused on <em>engineering</em> AI usage (code generation safety, prompt logging, 
+                            provenance) and skip model-eval steps. If you later add contractors/humans, they inherit the same gates; 
+                            nothing changes in the process.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">Decision Flow</h3>
+                        <p class="text-sm text-gray-600">Planner drafts → Security/Test/SRE/FinOps agents gate → You approve → 
+                            Implementer merges. <strong>Human-oversight principle:</strong> You always approve "Go" at each gate 
+                            and for any user-impacting change. The blueprint encodes those approval gates explicitly.</p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-16 pt-8 border-t border-gray-200">
+            <p class="text-sm text-gray-500">&copy; 2025 AI-First Enterprise Blueprint. A new paradigm for building.</p>
+        </footer>
+
+    </div>
+    
+    <!-- Gemini Modal -->
+    <div id="gemini-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 id="gemini-modal-title" class="text-xl font-bold">AI Assistant</h3>
+                <button id="gemini-modal-close" class="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-6 flex-grow overflow-y-auto">
+                <div id="gemini-modal-input-container">
+                    <label id="gemini-modal-label" for="gemini-modal-input" class="block text-sm font-medium text-gray-700 mb-2">Input</label>
+                    <textarea id="gemini-modal-input" rows="4" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+                <div id="gemini-modal-output-container" class="mt-4">
+                    <div id="gemini-pipeline-log" class="space-y-2 hidden"></div>
+                    <div class="flex justify-between items-center mt-4">
+                         <h4 id="gemini-result-heading" class="text-lg font-semibold">Result</h4>
+                         <div class="space-x-2">
+                            <button id="gemini-copy-button" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md hidden">Copy</button>
+                            <button id="gemini-download-button" class="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1 px-3 rounded-md hidden">Download Plan Pack</button>
+                         </div>
+                    </div>
+                    <div id="gemini-modal-spinner" class="hidden flex justify-center items-center h-48">
+                        <div class="spinner"></div>
+                    </div>
+                    <div id="gemini-modal-result" class="mt-2 p-4 bg-slate-50 rounded-md text-sm whitespace-pre-wrap h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+            <div class="p-4 border-t flex justify-end">
+                <button id="gemini-modal-submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">Generate</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const FONT_COLOR = '#374151';
+            const GRID_COLOR = '#E5E7EB';
+            const ACCENT_COLOR = '#1d4ed8';
+            const ACCENT_COLOR_BG = 'rgba(29, 78, 216, 0.2)';
+            const CHECKLIST_STORAGE_KEY = 'aiBlueprintChecklist';
+            const TIMELINE_STORAGE_KEY = 'aiBlueprintTimelineOpen';
+            const PRE_PHASE_TIMELINE_STORAGE_KEY = 'aiBlueprintPrePhaseTimelineOpen';
+
+            const tooltipPlugin = {
+                tooltip: {
+                    callbacks: {
+                        title: function (tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            return Array.isArray(label) ? label.join(' ') : label;
+                        }
+                    }
+                }
+            };
+
+            new Chart(document.getElementById('workloadChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['AI Execution', 'Human Oversight'],
+                    datasets: [{
+                        data: [95, 5],
+                        backgroundColor: [ACCENT_COLOR, '#dbeafe'],
+                        borderColor: '#f8f9fa',
+                        borderWidth: 4,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: FONT_COLOR } },
+                        ...tooltipPlugin
+                    }
+                }
+            });
+            
+            const prePhaseTimelineData = [
+                { gate: 'P0', title: 'Intake & Context', details: 'Submit problem statement, target users, constraints, success criteria. AI generates One-Pager v1, Stakeholder map, OKR hypotheses.', exit: 'Clarity and minimal ambiguity score achieved.'},
+                { gate: 'P1', title: 'Market, Users, and Problem Definition', details: 'AI generates JTBD/Persona brief, Problem decomposition, Alternatives landscape, and top-10 key risks.', exit: 'Problem-solution fit hypothesis and competitive analysis complete.' },
+                { gate: 'P2', title: 'Solution Options & Architecture', details: 'AI generates 2-3 Architecture options (ADR format), diagrams, trade-off matrix, and a build vs buy matrix.', exit: 'Recommended option with rationale and rollback paths approved.', gemini: { action: 'adr', label: '✨ Draft Architecture ADR', inputLabel: 'Describe the architecture option', placeholder: 'E.g., A serverless architecture using AWS Lambda for compute, S3 for storage, and API Gateway for the frontend.' } },
+                { gate: 'P3', title: 'NFRs, Security/Privacy, Compliance', details: 'AI drafts NFR set, Threat model (STRIDE/LINDDUN), DPIA pre-draft, Data map & retention policy, and Accessibility intent (WCAG 2.2 AA).', exit: 'NFR coverage, mitigations, and compliance mapping approved.', gemini: { action: 'nfrs', label: '✨ Draft NFRs', inputLabel: 'Describe the product', placeholder: 'E.g., A real-time collaborative whiteboard application for enterprise teams.' } },
+                { gate: 'P4', title: 'Tooling, Dependencies, Vendors', details: 'AI generates dependency graph, vendor shortlist, licensing posture, and AI model selection matrix.', exit: 'Vendor/tool decision narrative and supply chain posture approved.' },
+                { gate: 'P5', title: 'Delivery Strategy & Cost Model', details: 'AI generates Epics/Milestones plan, RACI/DRIs, Release plan, Training plan, and a FinOps cost model (FOCUS-aligned) with budget guardrails.', exit: 'Feasible plan and budget guardrails approved.' },
+                { gate: 'P6', title: 'Plan Pack Finalization', details: 'All artifacts are compiled into a final, versioned "Plan Pack" dossier. The system creates a "v1.0" tag in Git.', exit: 'Human approval signed off. Ready to proceed to G0.' }
+            ];
+
+            const timelineData = [
+                { gate: 'G0', title: 'Strategy & Risk Scoping', duration: '1–3d', details: 'Define Vision, OKRs, risk register, data map, and regulatory scan (GDPR, EU AI Act). Define WCAG 2.2 AA as a core requirement.', exit: 'Approved one-pager and decision narrative.', gemini: { action: 'risks', label: '✨ Brainstorm Risks', inputLabel: 'Describe your product idea', placeholder: 'E.g., A mobile app that uses computer vision to identify plants from photos.' } },
+                { gate: 'G1', title: 'Feasibility & Architecture', duration: '2–5d', details: 'Map context, data flows, and non-functional requirements (NFRs). Conduct threat modeling (STRIDE/LINDDUN) and a Well-Architected review.', exit: 'Signed-off architecture, NFRs, and known high risks.' },
+                { gate: 'G2', title: 'Guardrails & Controls Setup', duration: '2–5d', details: 'Composer-first: docker-compose.guardrails.yml with pinned digests; SSDF/ASVS policy; code review rules; secrets mgmt; dep & license scanning with vuln SLAs; SBOM (SPDX/CycloneDX), SLSA level target, Sigstore/Cosign signing, OpenSSF Scorecard; trunk-based CI/CD; gated merges; feature flags; canary/blue-green; auto-rollback; OpenTelemetry (OTLP) traces/metrics/logs; golden signals dashboard; SLOs & error budgets; on-call rota; incident runbooks/postmortems; DPIA plan; data retention/deletion; virtual DPO contact; AI governance (ISO/IEC 42001, NIST AI RMF, OWASP LLM Top 10, model/prompt cards, eval harness, red teaming).', exit: 'CI/CD green; controls enforced; dashboards live; runbooks ready.' },
+                { gate: 'G3', title: 'Detailed Design & Test Strategy', duration: '2–4d', details: 'Create RFCs, API contracts, schema plans, UX flows, and a comprehensive test strategy including performance, chaos, and WCAG 2.2 AA accessibility criteria.', exit: 'Approved RFCs and acceptance/test criteria.', gemini: { action: 'criteria', label: '✨ Draft Acceptance Criteria', inputLabel: 'Describe the feature', placeholder: 'E.g., As a user, I can upload a photo and the app should identify the plant.' } },
+                { gate: 'G4', title: 'Delivery Plan', duration: '≤2d', details: 'Define milestones, RACI, critical path, release plan, and a full capacity and cost plan.', exit: 'Feasible plan with allocated resources.' },
+                { gate: 'G5', title: 'Build & Integrate', duration: 'Iterative', details: 'Work in small PRs with dual-AI review. Enforce tests as gates, signed artifacts, and continuous security scans. For AI features, govern datasets and run resilience tests.', exit: 'All checks green per increment; release notes updated.' },
+                { gate: 'G6', title: 'Pre-Launch Hardening', duration: 'Varies', details: 'Conduct load/perf tests, security pen-testing, DR/BCP validation, and a full accessibility audit. Complete the DPIA.', exit: 'Signed Go/No-Go by you and all stakeholders.' },
+                { gate: 'G7', title: 'Launch & Rollout', duration: 'Varies', details: 'Use progressive delivery (canary/blue-green) with auto-rollback thresholds tied to SLOs. Execute war-room protocol and incident handling.', exit: 'Healthy SLOs in production; rollback posture ready.' },
+                { gate: 'G8', title: 'Operate, Learn & Scale', duration: 'Continuous', details: 'Conduct blameless postmortems with action SLAs. Report on DORA & FinOps metrics. Periodically refresh security posture and roadmap.', exit: 'Continuous improvement cycle is active.' }
+            ];
+            
+            function createTimeline(containerId, data, storageKey, colorClass = 'blue') {
+                const timelineContainer = document.getElementById(containerId);
+                if (!timelineContainer) return;
+                let timelineOpen = {};
+                try { timelineOpen = JSON.parse(localStorage.getItem(storageKey)) || {}; } catch {}
+                
+                data.forEach(item => {
+                    const isOpen = !!timelineOpen[item.gate];
+                    const panelId = `panel-${item.gate}`;
+                    const geminiButtonHtml = item.gemini ?
+                        `<button class="gemini-action-button mt-3 text-sm bg-blue-100 text-blue-700 font-semibold py-1 px-3 rounded-md hover:bg-blue-200" data-action="${item.gemini.action}" data-label="${item.gemini.inputLabel}" data-placeholder="${item.gemini.placeholder}">${item.gemini.label}</button>` : '';
+
+                    const div = document.createElement('div');
+                    div.className = 'relative timeline-item';
+                    div.innerHTML = `
+                        <div class="flex items-center cursor-pointer timeline-item-header focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1d4ed8]" role="button" tabindex="0" aria-expanded="${isOpen}" aria-controls="${panelId}">
+                            <div class="z-10 w-10 h-10 bg-${colorClass}-600 rounded-full flex items-center justify-center text-white font-bold">${item.gate}</div>
+                            <div class="ml-4 bg-white p-3 rounded-lg shadow-sm flex-1">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                    <span class="font-semibold text-gray-900">${item.title}</span>
+                                    ${item.duration ? `<span class="text-xs text-gray-500 mt-1 sm:mt-0">${item.duration}</span>` : ''}
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1 line-clamp-2">${item.details}</p>
+                            </div>
+                        </div>
+                        <div id="${panelId}" class="pl-14 timeline-item-content ${isOpen ? 'open' : ''}">
+                            <div class="bg-slate-50 p-4 rounded-lg text-sm text-gray-700 space-y-2">
+                                <p>${item.details}</p>
+                                <p class="text-xs font-semibold text-gray-500">Exit: ${item.exit}</p>
+                                ${geminiButtonHtml}
+                            </div>
+                        </div>`;
+                    timelineContainer.appendChild(div);
+                });
+                
+                const persistTimeline = () => localStorage.setItem(storageKey, JSON.stringify(timelineOpen));
+                timelineContainer.querySelectorAll('.timeline-item-header').forEach(header => {
+                    const gate = header.querySelector('.z-10').textContent.trim();
+                    const content = header.parentElement.querySelector('.timeline-item-content');
+                    const toggle = () => {
+                        const opened = content.classList.toggle('open');
+                        header.setAttribute('aria-expanded', opened);
+                        timelineOpen[gate] = opened;
+                        persistTimeline();
+                    };
+                    header.addEventListener('click', toggle);
+                    header.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+                });
+            }
+
+            createTimeline('pre-phase-timeline-container', prePhaseTimelineData, PRE_PHASE_TIMELINE_STORAGE_KEY, 'purple');
+            createTimeline('timeline-container', timelineData, TIMELINE_STORAGE_KEY, 'blue');
+
+
+            new Chart(document.getElementById('doraChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Deploy Freq.', 'Lead Time', 'Change Fail %', 'MTTR', 'Cost Efficiency'],
+                    datasets: [{
+                        label: 'Weekly Health Score (out of 100)',
+                        data: [92, 85, 98, 88, 95],
+                        fill: true,
+                        backgroundColor: ACCENT_COLOR_BG,
+                        borderColor: ACCENT_COLOR,
+                        pointBackgroundColor: ACCENT_COLOR,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: ACCENT_COLOR
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: GRID_COLOR },
+                            grid: { color: GRID_COLOR },
+                            pointLabels: { color: FONT_COLOR, font: { size: 12 } },
+                            ticks: { display: false, beginAtZero: true, max: 100 }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        ...tooltipPlugin
+                    }
+                }
+            });
+
+            const checklistData = [
+                { id: 'g0', label: 'G0: Vision/OKRs + risk scan approved' },
+                { id: 'g1', label: 'G1: Architecture/NFRs approved' },
+                { id: 'g2', label: 'G2: Guardrails enforced (SSDF/SBOM/SLSA/Signing/Scorecard/OTel/SLOs/Flags)' },
+                { id: 'g3', label: 'G3: RFCs/design/test criteria approved' },
+                { id: 'g4', label: 'G4: Delivery plan & cost plan approved' },
+                { id: 'g5', label: 'G5: Increment meets all automated gates + docs updated' },
+                { id: 'g6', label: 'G6: Pen-test + DPIA + accessibility audit passed; Go/No-Go signed' },
+                { id: 'g7', label: 'G7: Canary/live SLOs healthy; rollback ready' },
+                { id: 'g8', label: 'G8: Postmortems done; DORA & FinOps reviewed; actions scheduled' }
+            ];
+
+            const checklistContainer = document.getElementById('acceptance-checklist-container');
+            let savedState = {};
+            try {
+                savedState = JSON.parse(localStorage.getItem(CHECKLIST_STORAGE_KEY)) || {};
+            } catch (e) {
+                console.error("Could not parse checklist state from localStorage", e);
+            }
+
+            checklistData.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center checklist-item';
+                const isChecked = savedState[item.id] || false;
+                div.innerHTML = `
+                    <input type="checkbox" id="${item.id}" class="h-4 w-4 rounded border-gray-300 text-[#1d4ed8] focus:ring-[#1d4ed8]" ${isChecked ? 'checked' : ''}>
+                    <label for="${item.id}" class="ml-3 block text-sm font-medium text-gray-700">${item.label}</label>
+                `;
+                checklistContainer.appendChild(div);
+            });
+
+            checklistContainer.addEventListener('change', (e) => {
+                if (e.target.type === 'checkbox') {
+                    savedState[e.target.id] = e.target.checked;
+                    localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(savedState));
+                }
+            });
+            const resetBtn = document.getElementById('reset-checklist');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    savedState = {};
+                    localStorage.removeItem(CHECKLIST_STORAGE_KEY);
+                    checklistContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                });
+            }
+            
+            // Gemini Modal Logic
+            const modal = document.getElementById('gemini-modal');
+            const closeModalBtn = document.getElementById('gemini-modal-close');
+            const submitModalBtn = document.getElementById('gemini-modal-submit');
+            const modalTitle = document.getElementById('gemini-modal-title');
+            const modalLabel = document.getElementById('gemini-modal-label');
+            const modalInput = document.getElementById('gemini-modal-input');
+            const modalResult = document.getElementById('gemini-modal-result');
+            const modalSpinner = document.getElementById('gemini-modal-spinner');
+            const copyButton = document.getElementById('gemini-copy-button');
+            const downloadButton = document.getElementById('gemini-download-button');
+            const pipelineLog = document.getElementById('gemini-pipeline-log');
+            const resultHeading = document.getElementById('gemini-result-heading');
+            const inputContainer = document.getElementById('gemini-modal-input-container');
+
+
+            let currentAction = '';
+
+            const prompts = {
+                idea: (input) => `Based on the following product idea, create a structured One-Pager in markdown format. The One-Pager should include sections for Problem, Target Users, Constraints, Success Criteria, a rough Timeline, and a Budget Hint. Product Idea: "${input}"`,
+                risks: (input) => `Based on the following product idea, identify and categorize potential business, technical, regulatory, and security risks for an early-stage startup. Present the risks in markdown format with clear headings for each category. Product idea: "${input}"`,
+                criteria: (input) => `Given the following feature description, write detailed acceptance criteria in Gherkin format (Given/When/Then). Ensure the criteria are specific, measurable, and testable. Feature: "${input}"`,
+                update: (input) => `Based on the following bullet points of weekly progress, draft a professional and concise stakeholder update email. The tone should be confident and forward-looking. Start with a brief summary, then list the key accomplishments, and end with next week's focus. Points:\n- ${input.replace(/\n/g, '\n- ')}`,
+                adr: (input) => `Draft a concise Architecture Decision Record (ADR) in markdown format for the following architecture option. Include sections for Status (Proposed), Context, Decision, Rationale (including trade-offs), and Consequences. Architecture Option: "${input}"`,
+                nfrs: (input) => `For a product described as "${input}", draft a set of non-functional requirements (NFRs) in markdown list format. Cover Reliability, Performance, Security, Privacy, Scalability, Cost, and Accessibility (WCAG 2.2 AA).`,
+                tooling: (onePager) => `Based on this One-Pager, produce: 1) dependency graph (markdown), 2) vendor shortlist with pros/cons and licensing posture, 3) AI model selection matrix if applicable (markdown table).\n\nOne-Pager:\n${onePager}`,
+                delivery: (onePager) => `From this One-Pager, produce a Delivery Plan: epics & milestones (markdown), RACI/DRIs (table), release plan, and training plan.\n\nOne-Pager:\n${onePager}`,
+                finops: (idea) => `For product: "${idea}", produce a FinOps cost model in CSV with headers: item,unit,qty,unit_cost_usd,monthly_cost_usd,notes. Include cloud/GPU/LLM/API/storage/bandwidth lines and assumptions.`,
+                focusTags: (idea) => `Define FOCUS tags for cost allocation at feature level. Output markdown with a tagging convention and examples for the product: "${idea}".`,
+                compliance: (onePager) => `Map the plan to compliance frameworks in markdown: Well-Architected pillars, SSDF practices, NIST AI RMF (Map/Measure/Manage/Govern), ISO/IEC 42001 controls.\n\nOne-Pager:\n${onePager}`,
+                planPackYaml: (meta) => `Emit a plan-pack.yaml skeleton referencing files under /planning. Include gates P0..P6 with artifact paths, and budget guardrails (alert_at_pct: 80, block_at_pct: 100). Meta: ${meta}`
+            };
+
+            function openModal(action, label, placeholder) {
+                currentAction = action;
+                modalTitle.textContent = `✨ AI Assistant: ${label.replace('✨ ', '')}`;
+                modalLabel.textContent = label.replace('✨ ', '');
+                modalInput.placeholder = placeholder;
+                modalInput.value = '';
+                modalResult.textContent = '';
+                pipelineLog.innerHTML = '';
+                
+                if (action === 'idea') {
+                    pipelineLog.classList.remove('hidden');
+                    resultHeading.textContent = "Final Plan Pack";
+                } else {
+                    pipelineLog.classList.add('hidden');
+                    resultHeading.textContent = "Result";
+                }
+                
+                inputContainer.classList.remove('hidden');
+                copyButton.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+                modal.classList.remove('hidden');
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+            
+            async function callGemini(promptText) {
+                // Use local Ollama server instead of remote Gemini API
+                // Requires Ollama running locally: https://ollama.ai
+                // Default model can be overridden by setting window.OLLAMA_MODEL
+                const apiUrl = 'http://localhost:11434/api/generate';
+                const payload = {
+                    model: window.OLLAMA_MODEL || 'llama3',
+                    prompt: promptText,
+                    stream: false
+                };
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    throw new Error(`Ollama request failed with status ${response.status}`);
+                }
+                const result = await response.json();
+                const text = result?.response;
+                if (!text) {
+                    throw new Error('No text found in Ollama response.');
+                }
+                return text;
+            }
+            
+            function addLogEntry(text, status = 'running') {
+                const entry = document.createElement('div');
+                entry.className = `pipeline-log-entry text-sm ${status}`;
+                entry.textContent = text;
+                pipelineLog.appendChild(entry);
+                pipelineLog.scrollTop = pipelineLog.scrollHeight;
+                return entry;
+            }
+            
+            // Simple rubric scoring helper
+            function scoreContent(md, keywords = []) {
+                let score = 0;
+                const lower = md.toLowerCase();
+                if (md && md.length > 300) score += 30; // length heuristic
+                const headings = (md.match(/^#+\s/mg) || []).length; if (headings >= 5) score += 20;
+                keywords.forEach(k => { if (lower.includes(k.toLowerCase())) score += Math.floor(50/keywords.length); });
+                return Math.min(100, score);
+            }
+
+            let planPack = {}; // persisted for download
+            let provenance = [];
+
+            async function runPlanningPipeline(idea) {
+                inputContainer.classList.add('hidden');
+                modalSpinner.classList.remove('hidden');
+                modalResult.classList.add('hidden');
+                copyButton.classList.add('hidden');
+                downloadButton.classList.add('hidden');
+                submitModalBtn.disabled = true;
+                pipelineLog.innerHTML = '';
+
+                planPack = {};
+                provenance = [];
+                let currentLog;
+
+                async function generateWithProvenance(gate, prompt) {
+                    provenance.push({ gate, prompt });
+                    const text = await callGemini(prompt);
+                    provenance[provenance.length - 1].bytes = text.length;
+                    return text;
+                }
+
+                async function approveLoop(gate, draft, keywords, refinePromptBuilder) {
+                    let score = scoreContent(draft, keywords);
+                    addLogEntry(`${gate}: Scored ${score}/100`);
+                    if (score < 70) {
+                        const refinePrompt = refinePromptBuilder(draft, score);
+                        const revised = await generateWithProvenance(gate+':refine', refinePrompt);
+                        const newScore = scoreContent(revised, keywords);
+                        addLogEntry(`${gate}: Revised score ${newScore}/100`);
+                        if (newScore > score) draft = revised;
+                        score = newScore;
+                    }
+                    // Human approval gate
+                    const approved = window.confirm(`${gate}: Score ${score}/100. Approve? (Cancel to request another revision)`);
+                    if (!approved) {
+                        const refinePrompt = refinePromptBuilder(draft, score) + "\nFocus on addressing missing sections and improving structure.";
+                        draft = await generateWithProvenance(gate+':revise', refinePrompt);
+                    }
+                    return draft;
+                }
+
+                try {
+                    // P0
+                    currentLog = addLogEntry('🗓️ Planner: Drafting One-Pager...');
+                    const onePagerPrompt = prompts.idea(idea);
+                    planPack.onePager = await generateWithProvenance('P0', onePagerPrompt);
+                    planPack.onePager = await approveLoop('P0', planPack.onePager, ['problem','target users','constraints','success','timeline','budget'], (d,s)=>`Improve this One-Pager to big-tech standard. Add any missing sections and tighten language. Current score ${s}.\n\n${d}`);
+                    currentLog.textContent = '✅ Planner: One-Pager Approved.';
+                    currentLog.classList.replace('running', 'success');
+
+                    // P1
+                    currentLog = addLogEntry('🛡️ Security Agent: Analyzing Risks...');
+                    const riskPrompt = `Based on this One-Pager, generate a Top 10 Risk list with categories and mitigations.\n\n${planPack.onePager}`;
+                    planPack.risks = await generateWithProvenance('P1', riskPrompt);
+                    planPack.risks = await approveLoop('P1', planPack.risks, ['risk','mitigation','security','regulatory','financial'], (d,s)=>`Revise risk list to be concise, categorized, with mitigations and owners. Score ${s}.\n\n${d}`);
+                    currentLog.textContent = '✅ Security Agent: Risks Approved.';
+                    currentLog.classList.replace('running', 'success');
+
+                    // P2
+                    currentLog = addLogEntry('🏛️ Architect: Exploring Solutions...');
+                    const adrPrompt = `Based on this One-Pager and Risk List, generate two distinct architecture options in ADR format with trade-offs.\n\n${planPack.onePager}\n\n${planPack.risks}`;
+                    planPack.adrs = await generateWithProvenance('P2', adrPrompt);
+                    planPack.adrs = await approveLoop('P2', planPack.adrs, ['adr','context','decision','rationale','trade-offs','consequences'], (d,s)=>`Improve ADRs with crisp decisions, explicit rollback plans, and Well-Architected mapping. Score ${s}.\n\n${d}`);
+                    currentLog.textContent = '✅ Architect: Architecture Options Approved.';
+                    currentLog.classList.replace('running', 'success');
+
+                    // P3
+                    currentLog = addLogEntry('📡 SRE: Defining NFRs...');
+                    const nfrPrompt = prompts.nfrs(idea);
+                    planPack.nfrs = await generateWithProvenance('P3', nfrPrompt);
+                    planPack.nfrs = await approveLoop('P3', planPack.nfrs, ['reliability','performance','security','privacy','scalability','cost','accessibility'], (d,s)=>`Tighten NFRs: add thresholds and measurement methods. Score ${s}.\n\n${d}`);
+                    currentLog.textContent = '✅ SRE: NFRs Approved.';
+                    currentLog.classList.replace('running', 'success');
+
+                    // P4
+                    currentLog = addLogEntry('🧰 Tooling: Dependencies & Vendors...');
+                    const toolingPrompt = prompts.tooling(planPack.onePager);
+                    planPack.tooling = await generateWithProvenance('P4', toolingPrompt);
+                    planPack.tooling = await approveLoop('P4', planPack.tooling, ['dependency','vendor','license','matrix'], (d,s)=>`Refine tooling/vendors with explicit licenses and supply-chain posture. Score ${s}.\n\n${d}`);
+                    currentLog.textContent = '✅ Tooling: Approved.';
+                    currentLog.classList.replace('running', 'success');
+
+                    // P5
+                    currentLog = addLogEntry('🚢 Delivery & FinOps...');
+                    const deliveryPrompt = prompts.delivery(planPack.onePager);
+                    planPack.delivery = await generateWithProvenance('P5:delivery', deliveryPrompt);
+                    const finopsPrompt = prompts.finops(idea);
+                    planPack.costModelCsv = await generateWithProvenance('P5:finops', finopsPrompt);
+                    const focusPrompt = prompts.focusTags(idea);
+                    planPack.focusTags = await generateWithProvenance('P5:focus', focusPrompt);
+                    planPack.delivery = await approveLoop('P5', planPack.delivery, ['epics','milestones','raci','release','training'], (d,s)=>`Make delivery plan concrete with DRIs and critical path. Score ${s}.\n\n${d}`);
+                    currentLog.textContent = '✅ Delivery & FinOps: Approved.';
+                    currentLog.classList.replace('running', 'success');
+
+                    // P6
+                    currentLog = addLogEntry('🧭 Compliance & Finalization...');
+                    const compliancePrompt = prompts.compliance(planPack.onePager);
+                    planPack.compliance = await generateWithProvenance('P6:compliance', compliancePrompt);
+                    const meta = JSON.stringify({ title: idea.substring(0,80) });
+                    planPack.planPackYaml = await generateWithProvenance('P6:plan-pack.yaml', prompts.planPackYaml(meta));
+                    currentLog.textContent = '✅ Plan Pack: Finalized.';
+                    currentLog.classList.replace('running', 'success');
+
+                    // Final Pack (combined MD)
+                    const finalResult = `\n# Plan Pack for: ${idea.substring(0, 50)}\n\n---\n\n## 1. One-Pager (P0)\n\n${planPack.onePager}\n\n---\n\n## 2. Risk Analysis (P1)\n\n${planPack.risks}\n\n---\n\n## 3. Architecture Options (P2)\n\n${planPack.adrs}\n\n---\n\n## 4. Non-Functional Requirements (P3)\n\n${planPack.nfrs}\n\n---\n\n## 5. Tooling & Vendors (P4)\n\n${planPack.tooling}\n\n---\n\n## 6. Delivery Plan (P5)\n\n${planPack.delivery}\n\n---\n\n## 7. FinOps (P5)\n\n### FOCUS Tags\n${planPack.focusTags}\n\n### Cost Model (CSV)\n\n${planPack.costModelCsv}\n\n---\n\n## 8. Compliance Mapping (P6)\n\n${planPack.compliance}\n`;
+                    modalResult.textContent = finalResult;
+                    copyButton.classList.remove('hidden');
+                    downloadButton.classList.remove('hidden');
+
+                } catch (error) {
+                    if (currentLog) {
+                        currentLog.textContent = `❌ Error: ${error.message}`;
+                        currentLog.classList.replace('running', 'error');
+                    }
+                    modalResult.textContent = `An error occurred during the pipeline: ${error.message}`;
+                } finally {
+                    modalSpinner.classList.add('hidden');
+                    modalResult.classList.remove('hidden');
+                    submitModalBtn.disabled = false;
+                }
+            }
+            
+            document.querySelectorAll('.gemini-action-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const { action, label, placeholder } = e.target.dataset;
+                    openModal(action, label, placeholder);
+                });
+            });
+
+            document.getElementById('gemini-update-button').addEventListener('click', () => {
+                openModal('update', 'Draft Weekly Update', 'Enter key accomplishments as bullet points...');
+            });
+            
+            document.getElementById('gemini-idea-button').addEventListener('click', () => {
+                 openModal('idea', 'Create Plan Pack from Idea', 'Enter your high-level product idea...');
+            });
+
+            closeModalBtn.addEventListener('click', closeModal);
+            
+            submitModalBtn.addEventListener('click', async () => {
+                const input = modalInput.value;
+                if (!input.trim()) return;
+
+                if (currentAction === 'idea') {
+                    await runPlanningPipeline(input);
+                } else if (prompts[currentAction]) {
+                    inputContainer.classList.add('hidden');
+                    modalSpinner.classList.remove('hidden');
+                    modalResult.classList.add('hidden');
+                    copyButton.classList.add('hidden');
+                    submitModalBtn.disabled = true;
+                    try {
+                        const prompt = prompts[currentAction](input);
+                        const resultText = await callGemini(prompt);
+                        modalResult.textContent = resultText;
+                        copyButton.classList.remove('hidden');
+                    } catch (error) {
+                        modalResult.textContent = `An error occurred: ${error.message}`;
+                    } finally {
+                        modalSpinner.classList.add('hidden');
+                        modalResult.classList.remove('hidden');
+                        submitModalBtn.disabled = false;
+                        inputContainer.classList.remove('hidden');
+                    }
+                }
+            });
+            
+            copyButton.addEventListener('click', () => {
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = modalResult.textContent;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                try {
+                    document.execCommand('copy');
+                    copyButton.textContent = 'Copied!';
+                    setTimeout(() => { copyButton.textContent = 'Copy'; }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(tempTextarea);
+            });
+
+            // Download Plan Pack as zip with structure under /planning
+            downloadButton.addEventListener('click', async () => {
+                const zip = new JSZip();
+                const base = 'planning/';
+                const files = [
+                    { path: base+'intake/one-pager.md', content: planPack.onePager || '' },
+                    { path: base+'risk/risk-top10.md', content: planPack.risks || '' },
+                    { path: base+'solution/options/adrs.md', content: planPack.adrs || '' },
+                    { path: base+'nfrs/nfrs.md', content: planPack.nfrs || '' },
+                    { path: base+'tooling/vendors.md', content: planPack.tooling || '' },
+                    { path: base+'delivery/plan.md', content: planPack.delivery || '' },
+                    { path: base+'finops/focus-tags.md', content: planPack.focusTags || '' },
+                    { path: base+'finops/cost-model.csv', content: planPack.costModelCsv || '' },
+                    { path: base+'governance/compliance-mapping.md', content: planPack.compliance || '' },
+                    { path: base+'plan-pack.yaml', content: planPack.planPackYaml || '' },
+                    { path: base+'provenance.json', content: JSON.stringify(provenance, null, 2) }
+                ];
+                files.forEach(f => zip.file(f.path, f.content));
+                // Schemas
+                const ideaSchema = `{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IdeaIntake",
+  "type": "object",
+  "properties": {
+    "title": { "type": "string" },
+    "problem": { "type": "string" },
+    "targetUsers": { "type": "string" },
+    "constraints": { "type": "string" },
+    "successCriteria": { "type": "string" },
+    "timeline": { "type": "string" },
+    "budgetHint": { "type": "string" }
+  },
+  "required": ["title","problem","targetUsers","successCriteria"]
+}`;
+                zip.file(base+'schemas/idea-intake.schema.json', ideaSchema);
+                const packSchema = `version: number\nmeta:\n  id: string\n  title: string\n  owner: string\ngates:\n  P0..P6: { status: string, score: number, narrative: string, artifacts: string[] }\nbudget:\n  guardrails: { alert_at_pct: number, block_at_pct: number }\nreporting:\n  cadence: string\n`;
+                zip.file(base+'schemas/plan-pack.schema.yaml', packSchema);
+                const blob = await zip.generateAsync({ type: 'blob' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'plan-pack.zip';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+        });
+    </script>
+</body>
+
+</html>

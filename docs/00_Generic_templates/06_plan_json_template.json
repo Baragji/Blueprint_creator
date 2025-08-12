@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "your-project-name",
+    "type": "web|service|library|cli|data-ml|monorepo",
+    "goals": ["Clear, testable goals"],
+    "constraints": ["offline_safe", "no paid APIs", "deadline: TBD"]
+  },
+  "workspaces": [
+    {
+      "name": "app",
+      "path": "apps/app",
+      "language": "ts",
+      "framework": "next",
+      "commands": {
+        "install": "npm ci",
+        "build": "npm run build",
+        "test": "npm test",
+        "lint": "npm run lint"
+      }
+    }
+  ],
+  "phases": [
+    {
+      "id": "phase-1-setup",
+      "objectives": ["Initialize repo, tooling, tests"],
+      "tasks": [
+        {
+          "id": "lint-setup",
+          "objective": "Add ESLint + Prettier and enforce",
+          "dependencies": [],
+          "acceptance": ["Lint passes with 0 warnings", "Prettier clean"],
+          "artifacts": ["eslint logs", "prettier check logs"],
+          "workspace": "app",
+          "estimated_effort": "S"
+        }
+      ]
+    }
+  ],
+  "dependencies": [["lint-setup", "build-setup"]],
+  "priorities": { "lint-setup": 1, "build-setup": 2 }
+}

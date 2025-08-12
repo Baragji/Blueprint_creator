@@ -1,0 +1,304 @@
+# AI-First Enterprise Blueprint - Development Guardrails Configuration
+# This file defines the TDD framework, quality gates, and consistency rules
+
+project:
+  name: "AI-First Enterprise Blueprint"
+  version: "1.0.0"
+  description: "Enterprise-grade web application for AI-first development workflows"
+  
+tdd_framework:
+  # Test-Driven Development Configuration
+  cycle_enforcement: true
+  required_phases:
+    - "RED"    # Write failing tests first
+    - "GREEN"  # Implement minimal code to pass tests
+    - "REFACTOR" # Improve code while keeping tests green
+  
+  stopping_points:
+    # Mandatory stops in development process
+    - phase: "RED"
+      condition: "no_failing_tests"
+      action: "block_progression"
+      message: "Must write failing tests before implementing code"
+    
+    - phase: "GREEN"
+      condition: "failing_tests_exist"
+      action: "block_progression"
+      message: "All tests must pass before moving to REFACTOR phase"
+    
+    - phase: "REFACTOR"
+      condition: "failing_tests_exist"
+      action: "block_progression"
+      message: "Cannot refactor with failing tests"
+    
+    - phase: "any"
+      condition: "coverage_below_threshold"
+      threshold: 80
+      action: "warn"
+      message: "Test coverage below 80% - consider adding more tests"
+
+quality_gates:
+  # G-Gate System Configuration
+  sequential_enforcement: true
+  
+  G1:
+    name: "Requirements Validation"
+    description: "Validate and approve project requirements"
+    criteria:
+      - "requirements_documented"
+      - "stakeholder_approval"
+      - "acceptance_criteria_defined"
+    deliverables:
+      - "product_requirements_document"
+      - "user_stories"
+      - "acceptance_criteria"
+    
+  G2:
+    name: "Architecture Approval"
+    description: "Validate technical architecture and design"
+    dependencies: ["G1"]
+    criteria:
+      - "architecture_documented"
+      - "technical_review_completed"
+      - "security_review_passed"
+      - "scalability_validated"
+    deliverables:
+      - "technical_architecture_document"
+      - "api_specifications"
+      - "database_schema"
+      - "security_assessment"
+    
+  G3:
+    name: "Implementation Complete"
+    description: "Core implementation with passing tests"
+    dependencies: ["G1", "G2"]
+    criteria:
+      - "core_features_implemented"
+      - "unit_tests_passing"
+      - "integration_tests_passing"
+      - "code_review_approved"
+      - "test_coverage_minimum"
+    thresholds:
+      test_coverage: 80
+      code_quality_score: 85
+    deliverables:
+      - "working_application"
+      - "test_suite"
+      - "code_documentation"
+    
+  G4:
+    name: "Testing Complete"
+    description: "Comprehensive testing and quality assurance"
+    dependencies: ["G1", "G2", "G3"]
+    criteria:
+      - "all_tests_passing"
+      - "performance_tests_passed"
+      - "security_tests_passed"
+      - "user_acceptance_tests_passed"
+      - "regression_tests_passed"
+    thresholds:
+      test_coverage: 90
+      performance_score: 90
+      security_score: 95
+    deliverables:
+      - "test_reports"
+      - "performance_analysis"
+      - "security_audit"
+    
+  G5:
+    name: "Deployment Ready"
+    description: "Production deployment readiness"
+    dependencies: ["G1", "G2", "G3", "G4"]
+    criteria:
+      - "deployment_scripts_tested"
+      - "monitoring_configured"
+      - "backup_strategy_implemented"
+      - "rollback_plan_validated"
+      - "production_environment_ready"
+    deliverables:
+      - "deployment_package"
+      - "operations_runbook"
+      - "monitoring_dashboard"
+
+consistency_rules:
+  # Locked Tools and Patterns
+  locked_tools:
+    frontend:
+      framework: "React"
+      version: "^18.0.0"
+      state_management: "Redux Toolkit"
+      styling: "Tailwind CSS"
+      build_tool: "Vite"
+      testing: "Jest + React Testing Library"
+    
+    backend:
+      framework: "Express.js"
+      language: "TypeScript"
+      database: "Supabase"
+      authentication: "Supabase Auth"
+      testing: "Jest + Supertest"
+    
+    development:
+      package_manager: "pnpm"
+      code_formatter: "Prettier"
+      linter: "ESLint"
+      type_checker: "TypeScript"
+  
+  prohibited_patterns:
+    # Anti-patterns to avoid
+    - pattern: "hardcoded_values"
+      description: "No hardcoded configuration values"
+      enforcement: "error"
+      alternatives: ["environment_variables", "configuration_files"]
+    
+    - pattern: "mock_data_in_production"
+      description: "No mock data in production code"
+      enforcement: "error"
+      alternatives: ["real_api_integration", "proper_test_fixtures"]
+    
+    - pattern: "skipped_tests"
+      description: "No skipped or disabled tests without justification"
+      enforcement: "warning"
+      alternatives: ["fix_tests", "document_skip_reason"]
+    
+    - pattern: "large_components"
+      description: "Components should not exceed 200 lines"
+      enforcement: "warning"
+      threshold: 200
+      alternatives: ["split_components", "extract_hooks"]
+    
+    - pattern: "direct_database_access"
+      description: "No direct database queries in components"
+      enforcement: "error"
+      alternatives: ["api_layer", "service_layer"]
+
+delivery_packets:
+  # Required deliverables for each phase
+  templates:
+    commit_message:
+      format: "<type>(<scope>): <description>"
+      types: ["feat", "fix", "docs", "style", "refactor", "test", "chore"]
+      max_length: 72
+      require_body: true
+    
+    pull_request:
+      template: ".trae/templates/pull_request_template.md"
+      required_sections:
+        - "Description"
+        - "Changes Made"
+        - "Testing Done"
+        - "G-Gate Status"
+        - "Checklist"
+    
+    code_review:
+      required_reviewers: 1
+      require_tests: true
+      require_documentation: true
+      block_merge_on_failing_tests: true
+  
+  validation_requirements:
+    # What must be included in each delivery packet
+    G1_packet:
+      - "requirements_document"
+      - "user_stories"
+      - "acceptance_criteria"
+      - "stakeholder_signoff"
+    
+    G2_packet:
+      - "architecture_document"
+      - "api_specifications"
+      - "database_design"
+      - "security_review"
+      - "technical_review_signoff"
+    
+    G3_packet:
+      - "working_code"
+      - "passing_tests"
+      - "code_coverage_report"
+      - "code_review_approval"
+      - "documentation_updates"
+    
+    G4_packet:
+      - "comprehensive_test_suite"
+      - "test_coverage_report"
+      - "performance_test_results"
+      - "security_test_results"
+      - "user_acceptance_test_results"
+    
+    G5_packet:
+      - "deployment_package"
+      - "deployment_scripts"
+      - "monitoring_configuration"
+      - "operations_documentation"
+      - "rollback_procedures"
+
+monitoring:
+  # Context preservation and tracking
+  context_update_frequency: "on_test_run"
+  required_metrics:
+    - "test_coverage"
+    - "code_quality_score"
+    - "build_status"
+    - "deployment_status"
+    - "performance_metrics"
+  
+  alerts:
+    - condition: "test_coverage_drop"
+      threshold: 5  # percentage points
+      action: "block_merge"
+    
+    - condition: "failing_tests"
+      threshold: 1
+      action: "block_merge"
+    
+    - condition: "security_vulnerability"
+      severity: "high"
+      action: "block_deployment"
+
+enforcement:
+  # How rules are enforced
+  pre_commit_hooks:
+    - "lint_check"
+    - "type_check"
+    - "test_run"
+    - "context_update"
+  
+  pre_push_hooks:
+    - "full_test_suite"
+    - "coverage_check"
+    - "build_verification"
+  
+  ci_cd_gates:
+    - "automated_tests"
+    - "security_scan"
+    - "performance_test"
+    - "deployment_verification"
+  
+  manual_checkpoints:
+    - gate: "G1"
+      requires: "stakeholder_approval"
+    - gate: "G2"
+      requires: "architecture_review"
+    - gate: "G4"
+      requires: "qa_signoff"
+    - gate: "G5"
+      requires: "ops_approval"
+
+# Success Metrics
+success_metrics:
+  development_velocity:
+    target_cycle_time: "2_hours"  # RED-GREEN-REFACTOR cycle
+    target_feature_completion: "1_day"
+  
+  quality_metrics:
+    min_test_coverage: 80
+    max_defect_rate: 0.05  # 5% of features
+    min_code_quality_score: 85
+  
+  delivery_metrics:
+    max_gate_cycle_time:
+      G1: "2_days"
+      G2: "3_days"
+      G3: "5_days"
+      G4: "2_days"
+      G5: "1_day"

@@ -1,7 +1,12 @@
+/// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://qdtjbsimoilkwpfwwrsi.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkdGpic2ltb2lsa3dwZnd3cnNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MDgxMDYsImV4cCI6MjA3MDM4NDEwNn0.8fYPiXS0a4Ehm0rwlue2Uh23LCzShpzRrYbVTMOqkr8';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables for frontend Supabase client');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {

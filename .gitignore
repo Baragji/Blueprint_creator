@@ -19,7 +19,7 @@ coverage/
 
 # Environment variables
 .env*
-
+supabase.ts
 # Logs
 logs/
 *.log

@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/session_handoff.schema.json",
+  "title": "SESSION_HANDOFF",
+  "type": "object",
+  "required": ["fromRole", "toRole", "owner", "timestamp", "inputs", "outputs", "decisions"],
+  "properties": {
+    "fromRole": {"type": "string", "enum": ["MCA","RA","AA","SA","DBA","IA","QA","DA"]},
+    "toRole": {"type": "string", "enum": ["MCA","RA","AA","SA","DBA","IA","QA","DA"]},
+    "owner": {"type": "string"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "briefId": {"type": "string"},
+    "inputs": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "hash"],
+        "properties": {
+          "path": {"type": "string"},
+          "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "schema": {"type": "string"}
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "string"}
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/evidence_log.schema.json",
+  "title": "EVIDENCE_LOG",
+  "type": "object",
+  "required": ["projectId", "entries"],
+  "properties": {
+    "projectId": {"type": "string"},
+    "version": {"type": "string"},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "risk", "control", "evidence", "owner", "timestamp"],
+        "properties": {
+          "id": {"type": "string"},
+          "risk": {"type": "string"},
+          "control": {"type": "string"},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "hash"],
+              "properties": {
+                "path": {"type": "string"},
+                "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "schema": {"type": "string"}
+              }
+            }
+          },
+          "owner": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "expiry": {"type": "string", "format": "date"},
+          "status": {"type": "string", "enum": ["OPEN","MITIGATED","WAIVED"]},
+          "links": {"type": "array", "items": {"type": "string"}},
+          "notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}

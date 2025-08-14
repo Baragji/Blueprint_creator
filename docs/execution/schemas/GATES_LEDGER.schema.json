@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.org/schemas/gates_ledger.schema.json",
+  "title": "GATES_LEDGER",
+  "type": "object",
+  "required": ["projectId", "entries"],
+  "properties": {
+    "projectId": {"type": "string"},
+    "version": {"type": "string"},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate", "phase", "status", "timestamp", "artifacts", "evidenceHashes"],
+        "properties": {
+          "gate": {"type": "string", "enum": ["G0","G1","G2","G3","G4","G5","G6","G7","G8"]},
+          "phase": {"type": "string", "pattern": "^P-[0-6]$"},
+          "status": {"type": "string", "enum": ["PASS","FAIL","BLOCKED"]},
+          "owner": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"},
+          "inputsUsed": {"type": "array", "items": {"type": "string"}},
+          "checks": {"type": "array", "items": {"type": "string"}},
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "hash"],
+              "properties": {
+                "path": {"type": "string"},
+                "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "schema": {"type": "string"}
+              }
+            }
+          },
+          "evidenceHashes": {"type": "array", "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+          "risks": {"type": "array", "items": {"type": "string"}},
+          "notes": {"type": "string"}
+        }
+      }
+    }
+  }
+}

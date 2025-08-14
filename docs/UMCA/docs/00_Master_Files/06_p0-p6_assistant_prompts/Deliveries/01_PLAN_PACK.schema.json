@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://umca.example.org/schemas/PLAN_PACK.schema.json",
+  "title": "PLAN_PACK",
+  "description": "Plan Pack schema for P0–P6 planning → G0–G8 development. Self-contained, ≤200 lines. Compatible with SESSION_HANDOFF via artifacts[path,hash,schema,targetRoles,gateInputs]. Validate with: jsonschema -i example.json PLAN_PACK.schema.json",
+  "type": "object",
+  "required": [
+    "planPackId", "version", "problemBrief", "constraints", "optionsMatrix",
+    "decisionRecord", "risks", "acceptanceCriteria", "operatingModel",
+    "complianceBaseline", "artifacts", "checksums"
+  ],
+  "properties": {
+    "planPackId": {"type": "string", "description": "Unique ID for this Plan Pack"},
+    "version": {"type": "string", "description": "Semantic version of the pack"},
+    "briefId": {"type": "string", "description": "Links to project brief/reference"},
+    "owner": {"type": "string", "description": "Accountable owner for the plan"},
+    "createdAt": {"type": "string", "format": "date-time"},
+
+    "problemBrief": {
+      "type": "object",
+      "description": "Structured problem definition",
+      "required": ["context", "goals", "scope", "nonGoals"],
+      "properties": {
+        "context": {"type": "string"},
+        "goals": {"type": "array", "items": {"type": "string"}},
+        "scope": {"type": "array", "items": {"type": "string"}},
+        "nonGoals": {"type": "array", "items": {"type": "string"}},
+        "stakeholders": {"type": "array", "items": {"type": "string"}},
+        "successMetrics": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+
+    "constraints": {
+      "type": "object",
+      "description": "Technical/business constraints",
+      "properties": {
+        "business": {"type": "array", "items": {"type": "string"}},
+        "technical": {"type": "array", "items": {"type": "string"}},
+        "policies": {"type": "array", "items": {"type": "string"}},
+        "budgets": {"type": "object", "additionalProperties": {"type": "number"}},
+        "deadlines": {"type": "array", "items": {"type": "string", "format": "date"}}
+      }
+    },
+
+    "optionsMatrix": {
+      "type": "array",
+      "description": "Evaluated solution options",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "summary", "scores"],
+        "properties": {
+          "id": {"type": "string"},
+          "title": {"type": "string"},
+          "summary": {"type": "string"},
+          "pros": {"type": "array", "items": {"type": "string"}},
+          "cons": {"type": "array", "items": {"type": "string"}},
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {"type": "string"},
+                "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+              },
+              "required": ["path", "hash"]
+            }
+          },
+          "scores": {
+            "type": "object",
+            "properties": {
+              "cost": {"type": "integer", "minimum": 1, "maximum": 5},
+              "value": {"type": "integer", "minimum": 1, "maximum": 5},
+              "risk": {"type": "integer", "minimum": 1, "maximum": 5}
+            },
+            "required": ["cost", "value", "risk"]
+          }
+        }
+      }
+    },
+
+    "decisionRecord": {
+      "type": "object",
+      "description": "Final decision and rationale",
+      "required": ["chosenOptionId", "rationale", "consequences", "date"],
+      "properties": {
+        "chosenOptionId": {"type": "string"},
+        "rationale": {"type": "string"},
+        "consequences": {"type": "array", "items": {"type": "string"}},
+        "alternatives": {"type": "array", "items": {"type": "string"}},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "date": {"type": "string", "format": "date"}
+      }
+    },
+
+    "risks": {
+      "type": "array",
+      "description": "Risk assessment and mitigations",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "severity", "status"],
+        "properties": {
+          "id": {"type": "string"},
+          "description": {"type": "string"},
+          "severity": {"type": "string", "enum": ["LOW", "MEDIUM", "HIGH"]},
+          "mitigation": {"type": "string"},
+          "owner": {"type": "string"},
+          "status": {"type": "string", "enum": ["OPEN", "MITIGATED", "WAIVED"]},
+          "expiry": {"type": "string", "format": "date"}
+        }
+      }
+    },
+
+    "acceptanceCriteria": {
+      "type": "array",
+      "description": "Success definitions",
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": {"type": "string"},
+          "text": {"type": "string"},
+          "measurable": {"type": "boolean"},
+          "metric": {"type": "string"}
+        }
+      }
+    },
+
+    "operatingModel": {
+      "type": "object",
+      "description": "How the solution will operate",
+      "properties": {
+        "workflows": {"type": "array", "items": {"type": "string"}},
+        "raci": {"type": "object", "additionalProperties": {"type": "string"}},
+        "slas": {"type": "object", "additionalProperties": {"type": "string"}}
+      }
+    },
+
+    "complianceBaseline": {
+      "type": "object",
+      "description": "Regulatory/security requirements",
+      "properties": {
+        "frameworks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "version", "status"],
+            "properties": {
+              "name": {"type": "string"},
+              "version": {"type": "string"},
+              "status": {"type": "string", "enum": ["REQUIRED", "IN_SCOPE", "N/A"]},
+              "notes": {"type": "string"}
+            }
+          }
+        },
+        "aiGovernance": {"type": "boolean", "description": "ISO 42001/EU AI Act in scope"}
+      }
+    },
+
+    "artifacts": {
+      "type": "array",
+      "description": "Outputs exposed to development via handoff",
+      "items": {
+        "type": "object",
+        "required": ["path", "hash"],
+        "properties": {
+          "path": {"type": "string"},
+          "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "schema": {"type": "string"},
+          "targetRoles": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["MCA","RA","AA","SA","DBA","IA","QA","DA"]}
+          },
+          "gateInputs": {"type": "array", "items": {"type": "string", "enum": ["G1","G2","G3","G4","G5","G6","G7","G8"]}}
+        }
+      }
+    },
+
+    "checksums": {
+      "type": "object",
+      "description": "Map of artifact path → SHA-256",
+      "patternProperties": {
+        "^[\\w./-]+$": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
